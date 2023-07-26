@@ -6,6 +6,7 @@
 @Author  : zzYe
 
 """
+from web3 import Web3
 from core import ChainEnum
 
 
@@ -13,4 +14,4 @@ class Parser:
     def __init__(
             self, chain: ChainEnum
     ):
-        pass
+        self.web3 = Web3.HTTPProvider("")
