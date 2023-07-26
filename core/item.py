@@ -8,8 +8,18 @@
 """
 
 from enum import Enum
+from typing import Optional
+from pydantic import BaseModel
 
 
 class ChainEnum(Enum):
     ETH = "ETH"
     BNB = "BNB"
+
+
+class EventLog(BaseModel):
+    tranction_hash: str
+    address: str
+    name: Optional[str] = None
+    topics: Optional[list] = None
+    data: Optional[dict] = None
