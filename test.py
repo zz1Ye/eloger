@@ -17,9 +17,9 @@ from core.parser import Parser
 import pandas as pd
 
 if __name__ == '__main__':
-    tx_hash = "0x00129bd20219b59a008bcda102e4b93e2ff41480a473ce65055f78495cc1d3fb"
-    parser = Parser(ChainEnum.ETH)
-    parser.get_event_logs(tx_hash)
+    tx_hash = "0xd2e39941274eb2ce06c3ab35e238d24359828a351db4a2586aa29edd67cf0b02"
+    parser = Parser(ChainEnum.BNB)
+    print(parser.get_event_logs(tx_hash))
     exit(0)
 
 

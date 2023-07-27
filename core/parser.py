@@ -8,9 +8,12 @@
 """
 import os
 import json
-
 import requests
+
+from typing import List
 from web3 import Web3
+from hexbytes import HexBytes
+
 from core import ChainEnum
 from config import Config
 from core.item import EventLog
@@ -46,28 +49,47 @@ class Parser:
 
         return abi
 
-    def get_event_logs(self, tx_hash: str):
+    def get_event_logs(self, tx_hash: str) -> List[EventLog]:
         w3 = Web3(Web3.HTTPProvider(
             self.n_bucket.get(tx_hash)
         ))
-        receipt = w3.eth.get_transaction_receipt(tx_hash)
+        receipt = w3.eth.get_transaction_receipt(HexBytes(tx_hash))
 
-        for elog in receipt["logs"]:
+        elogs = []
+        for item in receipt["logs"]:
             elog_dict = {
                 camel_to_snake(k): w3.to_hex(v) if isinstance(v, bytes)
-                else v for k, v in dict(elog).items()
+                else v for k, v in dict(item).items()
             }
 
-            elog_item = EventLog.model_validate(elog_dict)
-            elog_item.topics = [
-                w3.to_hex(val) for val in elog_item.topics
-            ]
-
-            print(elog_item)
+            elog = EventLog.model_validate(elog_dict)
 
             # Get abi
-            abi = self.get_abi(elog_dict.address)
-            print(abi)
+            abi = self.get_abi(elog.address)
+            contract = w3.eth.contract(w3.to_checksum_address(elog.address), abi=abi["result"])
+
+            # Get event signature of log (first item in topics array)
+            receipt_event_signature_hex = w3.to_hex(elog.topics[0])
+
+            # Find events
+            events = [e for e in contract.abi if e["type"] == "event"]
+            for event in events:
+                # Get event signature components
+                name = event["name"]
+                inputs = ",".join([param["type"] for param in event["inputs"]])
+                # Hash event signature
+                event_signature_text = f"{name}({inputs})"
+                event_signature_hex = w3.to_hex(w3.keccak(text=event_signature_text))
+
+                # Find match between log's event signature and ABI's event signature
+                if event_signature_hex == receipt_event_signature_hex:
+                    decoded_log = dict(contract.events[event["name"]]().process_receipt(receipt)[0])
+                    elog.event = decoded_log['event']
+                    elog.args = dict(decoded_log['args'])
+                    break
+
+            elogs.append(elog)
+        return elogs
 
 
 
