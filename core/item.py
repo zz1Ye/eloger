@@ -18,8 +18,15 @@ class ChainEnum(Enum):
 
 
 class EventLog(BaseModel):
-    tranction_hash: str
+    transaction_hash: str
     address: str
+    block_hash: str
+    block_number: int
+    data: str
+    log_index: int
+    removed: bool
+    topics: list
+    transactionIndex: int
+
     name: Optional[str] = None
-    topics: Optional[list] = None
-    data: Optional[dict] = None
+

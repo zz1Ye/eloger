@@ -9,6 +9,7 @@
 from web3 import Web3
 from core import ChainEnum
 from config import Config
+from utils import camel_to_snake
 from utils.bucket import ConHashBucket
 
 
@@ -32,6 +33,8 @@ class Parser:
                 k: w3.to_hex(v) if isinstance(v, bytes)
                 else v for k, v in dict(log).items()
             }
-            print(log_dict)
+            for key, value in log_dict.items():
+                print(f"{camel_to_snake(key)} type: {type(value)}")
+            exit(0)
 
 
