@@ -30,8 +30,8 @@ class Config(BaseSettings):
 
     SCAN: dict = {
         'ETH': Scan(
-            URL='https://cn.etherscan.com/',
-            API='https://api.etherscan.io/api/',
+            URL='https://cn.etherscan.com',
+            API='https://api.etherscan.io/api',
             NAME='Etherscan',
             API_KEY=[
                 "JCP5B6U5RXI5I7WRC19AZEZPZ21395IJSG",
@@ -40,8 +40,8 @@ class Config(BaseSettings):
             ]
         ),
         'BNB': Scan(
-            URL='https://bscscan.com/',
-            API='https://api.bscscan.com/api/',
+            URL='https://bscscan.com',
+            API='https://api.bscscan.com/api',
             NAME='Bscscan',
             API_KEY=[
                 "S7N1S396ZB98XYC5WQ3IWEPDBGJKESXH5B",
@@ -56,6 +56,16 @@ class Config(BaseSettings):
             Node(API="https://eth-mainnet.alchemyapi.io/v2/AgKT8OzbNsYnul856tenwnsnL3Pm7WRB", WEIGHT=1),
             Node(API="https://eth-mainnet.alchemyapi.io/v2/UOD8HE4CVqEiDY5E_9XbKDFqYZzJE3XP", WEIGHT=1),
             Node(API="https://eth-mainnet.alchemyapi.io/v2/gwlaWGMm1YWliQTvWtEHcjjfNXQ3W0lK", WEIGHT=1)
+        ],
+        'BNB': [
+            Node(API="https://bsc-dataseed1.ninicoin.io/", WEIGHT=1),
+            Node(API="https://bsc-dataseed2.ninicoin.io/", WEIGHT=1),
+            Node(API="https://bsc-dataseed3.ninicoin.io/", WEIGHT=1),
+            Node(API="https://bsc-dataseed4.ninicoin.io/", WEIGHT=1),
+            Node(API="https://bsc-dataseed1.defibit.io/", WEIGHT=1),
+            Node(API="https://bsc-dataseed2.defibit.io/", WEIGHT=1),
+            Node(API="https://bsc-dataseed3.defibit.io/", WEIGHT=1),
+            Node(API="https://bsc-dataseed4.defibit.io/", WEIGHT=1),
         ]
     }
 

@@ -8,7 +8,7 @@
 """
 
 from enum import Enum
-from typing import Optional
+from typing import Optional, Any
 from pydantic import BaseModel
 
 
@@ -26,7 +26,8 @@ class EventLog(BaseModel):
     log_index: int
     removed: bool
     topics: list
-    transactionIndex: int
+    transaction_index: int
 
     name: Optional[str] = None
+
 
