@@ -7,14 +7,8 @@
 
 """
 
-from enum import Enum
 from typing import Optional
 from pydantic import BaseModel
-
-
-class ChainEnum(Enum):
-    ETH = "ETH"
-    BNB = "BNB"
 
 
 class EventLog(BaseModel):

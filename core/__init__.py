@@ -7,6 +7,5 @@
 
 """
 from core.item import (
-    ChainEnum,
     EventLog
 )

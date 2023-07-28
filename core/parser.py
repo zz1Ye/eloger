@@ -11,14 +11,20 @@ import json
 import requests
 
 from typing import List
+
+from tqdm import tqdm
 from web3 import Web3
 from hexbytes import HexBytes
 
-from core import ChainEnum
+from config import ChainEnum
 from config import Config
 from core.item import EventLog
 from utils import camel_to_snake
 from utils.bucket import ConHashBucket
+
+
+import warnings
+warnings.filterwarnings(action='ignore', category=Warning)
 
 
 class Parser:
@@ -28,15 +34,20 @@ class Parser:
         self.scan = Config().SCAN[self.chain]
         self.a_bucket, self.n_bucket = ConHashBucket(), ConHashBucket()
 
+        # Api_key load balancing
         for api_key in self.scan.API_KEY:
             self.a_bucket.push(api_key)
 
+        # Node load balancing
         for node in self.nodes:
             self.n_bucket.push(node.API)
 
-    def get_abi(self, address: str):
+    def get_abi(self, address: str) -> dict:
         address, api_key = address.lower(), self.a_bucket.get(address)
-        abi_fpath = Config().DATA_DIR + "/abi/" + address + '.json'
+        if not os.path.exists(Config().ABI_DIR):
+            os.makedirs(Config().ABI_DIR)
+
+        abi_fpath = Config().ABI_DIR + '/' + address + '.json'
         if os.path.exists(abi_fpath):
             with open(abi_fpath, 'r') as f:
                 abi = json.load(f)
@@ -56,7 +67,7 @@ class Parser:
         receipt = w3.eth.get_transaction_receipt(HexBytes(tx_hash))
 
         elogs = []
-        for item in receipt["logs"]:
+        for item in tqdm(receipt["logs"]):
             elog_dict = {
                 camel_to_snake(k): w3.to_hex(v) if isinstance(v, bytes)
                 else v for k, v in dict(item).items()
@@ -84,8 +95,7 @@ class Parser:
                 # Find match between log's event signature and ABI's event signature
                 if event_signature_hex == receipt_event_signature_hex:
                     decoded_log = dict(contract.events[event["name"]]().process_receipt(receipt)[0])
-                    elog.event = decoded_log['event']
-                    elog.args = dict(decoded_log['args'])
+                    elog.event, elog.args = decoded_log['event'], dict(decoded_log['args'])
                     break
 
             elogs.append(elog)
