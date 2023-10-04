@@ -15,6 +15,7 @@ from pydantic_settings import BaseSettings
 
 class ChainEnum(Enum):
     BNB = "BNB"
+    Polygon = "Polygon"
 
 
 class Scan(BaseSettings):
@@ -44,6 +45,14 @@ class Config(BaseSettings):
                 "EGAQYID9BS2H4YC3WJITVZTXDHYSWIUJDS",
             ]
         ),
+        'Polygon': Scan(
+            URL='https://polygonscan.com//',
+            API='https://api.polygonscan.com/api/',
+            NAME='PolygonScan',
+            API_KEY=[
+                "7BTFI86WFGAAD91X2AGSF7YWBWC3M4R39S",
+            ]
+        ),
     }
 
     NODE: dict = {
@@ -56,5 +65,9 @@ class Config(BaseSettings):
             Node(API="https://bsc-dataseed2.defibit.io/", WEIGHT=1),
             Node(API="https://bsc-dataseed3.defibit.io/", WEIGHT=1),
             Node(API="https://bsc-dataseed4.defibit.io/", WEIGHT=1),
+        ],
+        'Polygon': [
+            Node(API="https://rpc-mainnet.maticvigil.com", WEIGHT=1),
+            Node(API="https://polygon-rpc.com", WEIGHT=1)
         ]
     }

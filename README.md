@@ -1,6 +1,6 @@
 # eloger
 
-> This is a tool that focuses on the parsing of smart contract event logs. By using the `web3` framework to obtain all event logs of a specific transaction and parse the events in the log, the complete information of the log is obtained. 
+> 📓 This is a tool that focuses on the parsing of smart contract event logs. By using the `web3` framework to obtain all event logs of a specific transaction and parse the events in the log, the complete information of the log is obtained. 
 
 
 ## Install
@@ -11,7 +11,7 @@ Before you start, enter the following command in the virtual environment.
 pip install -r requirements.txt
 ```
 
-Here, the python version used in this project is `3.9.12`.
+🙌 Here, the python version used in this project is `3.9.12`.
 
 
 ## Testing

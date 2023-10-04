@@ -19,15 +19,15 @@ class Bucket(metaclass=ABCMeta):
 
     @abstractmethod
     def get(self, **kwargs):
-        pass
+        raise NotImplementedError("Subclasses must implement abstract_method.")
 
     @abstractmethod
     def push(self, node: str):
-        pass
+        raise NotImplementedError("Subclasses must implement abstract_method.")
 
     @abstractmethod
     def pop(self, node: str):
-        pass
+        raise NotImplementedError("Subclasses must implement abstract_method.")
 
 
 class ConHashBucket(Bucket):
