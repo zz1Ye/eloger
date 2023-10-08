@@ -14,6 +14,7 @@ from pydantic_settings import BaseSettings
 
 
 class ChainEnum(Enum):
+    ETH = "ETH"
     BNB = "BNB"
     Polygon = "Polygon"
 
@@ -36,6 +37,14 @@ class Config(BaseSettings):
     ABI_DIR: str = DATA_DIR + "/abi"
 
     SCAN: dict = {
+        'ETH': Scan(
+            URL='https://cn.etherscan.com/',
+            API='https://api-cn.etherscan.com/api',
+            NAME='EtherScan',
+            API_KEY=[
+                "7MM6JYY49WZBXSYFDPYQ3V7V3EMZWE4KJK"
+            ]
+        ),
         'BNB': Scan(
             URL='https://bscscan.com',
             API='https://api.bscscan.com/api',
@@ -56,6 +65,11 @@ class Config(BaseSettings):
     }
 
     NODE: dict = {
+        'ETH': [
+            Node(API="https://cloudflare-eth.com", WEIGHT=1),
+            Node(API="https://rpc.moonriver.moonbeam.network", WEIGHT=1),
+            Node(API="https://mainnet-rpc.thundercore.com", WEIGHT=1),
+        ],
         'BNB': [
             Node(API="https://bsc-dataseed1.ninicoin.io/", WEIGHT=1),
             Node(API="https://bsc-dataseed2.ninicoin.io/", WEIGHT=1),
