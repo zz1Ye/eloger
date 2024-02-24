@@ -6,6 +6,6 @@
 @Author  : zzYe
 
 """
-from core.item import (
+from parser.item import (
     EventLog
 )

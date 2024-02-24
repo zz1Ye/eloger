@@ -18,12 +18,12 @@ from hexbytes import HexBytes
 
 from config import ChainEnum
 from config import Config
-from core.item import EventLog
+from parser.item import EventLog
 from utils import camel_to_snake
 from utils.bucket import ConHashBucket
 
-
 import warnings
+
 warnings.filterwarnings(action='ignore', category=Warning)
 
 
@@ -59,6 +59,39 @@ class Parser:
                 json.dump(abi, f)
 
         return abi
+
+    def parse_input(self, tx_hash: str):
+        w3 = Web3(Web3.HTTPProvider(
+            self.n_bucket.get(tx_hash)
+        ))
+        transaction = w3.eth.get_transaction(tx_hash)
+        transaction_input = transaction['input']
+
+        # 解析交易的input字段
+        function_signature = transaction_input[:10]  # 函数签名是前10个字符
+        contract = w3.eth.contract(abi=self.get_abi("0x609c690e8F7D68a59885c9132e812eEbDaAf0c9e")["result"])
+        # 打印所有函数名
+        for function in contract.abi:
+            if function['type'] == 'function':
+                print('函数名:', function['name'])
+        function = contract.get_function_by_selector(function_signature)
+
+        # 找到对应函数的ABI描述
+        function_abi_entry = next(
+            (abi for abi in contract.abi if abi['type'] == 'function' and abi.get('name') == 'swapAndBridge'),
+            None)
+
+        if function_abi_entry:
+            # 解码函数输入参数
+            decoded_input = contract.decode_function_input(transaction_input)
+
+            for i, (param_name, param_value) in enumerate(zip(function_abi_entry['inputs'], decoded_input)):
+                print(f"Parameter {i + 1}: {param_name['name']} = {param_value}")
+                if isinstance(param_value, dict):  # 判断变量是否为字典类型
+                    print({key: ('0x' + value.hex().lstrip('0') if isinstance(value, bytes) else value)
+                           for key, value in param_value.items()})
+        else:
+            print("Function ABI not found")
 
     def get_event_logs(self, tx_hash: str) -> List[EventLog]:
         w3 = Web3(Web3.HTTPProvider(
@@ -100,6 +133,3 @@ class Parser:
 
             elogs.append(elog)
         return elogs
-
-
-

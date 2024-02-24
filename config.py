@@ -66,9 +66,10 @@ class Config(BaseSettings):
 
     NODE: dict = {
         'ETH': [
-            Node(API="https://cloudflare-eth.com", WEIGHT=1),
-            Node(API="https://rpc.moonriver.moonbeam.network", WEIGHT=1),
-            Node(API="https://mainnet-rpc.thundercore.com", WEIGHT=1),
+            # Node(API="https://cloudflare-eth.com", WEIGHT=1),
+            # Node(API="https://rpc.moonriver.moonbeam.network", WEIGHT=1),
+            # Node(API="https://mainnet-rpc.thundercore.com", WEIGHT=1),
+            Node(API="https://eth-mainnet.alchemyapi.io/v2/AgKT8OzbNsYnul856tenwnsnL3Pm7WRB", WEIGHT=1)
         ],
         'BNB': [
             Node(API="https://bsc-dataseed1.ninicoin.io/", WEIGHT=1),
