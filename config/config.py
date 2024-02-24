@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """       
-@File   : config.py
+@File   : config1.py
 @Time   : 2024/2/24 16:25
 @Author : zzYe
 
@@ -10,12 +10,21 @@ import os
 import yaml
 import logging
 
+from pydantic import BaseModel
 from typing import List, Dict, Union
 from pydantic_settings import BaseSettings
+
 
 logging.basicConfig(
     level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s'
 )
+
+
+class Chain(BaseModel):
+    name: str
+    tag: str
+    scan: Dict
+    nodes: List[Dict]
 
 
 class Config(BaseSettings):
@@ -24,11 +33,11 @@ class Config(BaseSettings):
     ABI_DIR: str = DATA_DIR + "/abi"
     LOG_DIR: str = DATA_DIR + "/log"
     INPUT_DIR: str = DATA_DIR + "/input"
-    CHAINS: List
+    CHAINS: List[Chain]
 
     def chain(self, tag: str = "ETH") -> Union[Dict, None]:
         for chain in self.CHAINS:
-            if chain['tag'].lower() == tag.lower():
+            if chain.tag.lower() == tag.lower():
                 return chain
 
 

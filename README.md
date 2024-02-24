@@ -30,7 +30,7 @@ elogs = parser.get_event_logs(tx_hash)
 If you need to parse event logs on other chains, you can add relevant configuration in the `config.py`. Now take `Ethereum(ETH)` as an example.
 
 ```Python
-# config.py
+# config1.py
 
 # Add ETH to ChainEnum
 class ChainEnum(Enum):  
