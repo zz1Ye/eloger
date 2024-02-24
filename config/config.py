@@ -10,7 +10,7 @@ import os
 import yaml
 import logging
 
-from typing import List, Dict, Union, Any
+from typing import List, Dict, Union
 from pydantic_settings import BaseSettings
 
 logging.basicConfig(
@@ -22,7 +22,14 @@ class Config(BaseSettings):
     PROJECT: str = os.path.abspath(os.path.dirname(__file__))
     DATA_DIR: str = PROJECT + "/data"
     ABI_DIR: str = DATA_DIR + "/abi"
+    LOG_DIR: str = DATA_DIR + "/log"
+    INPUT_DIR: str = DATA_DIR + "/input"
     CHAINS: List
+
+    def chain(self, tag: str = "ETH") -> Union[Dict, None]:
+        for chain in self.CHAINS:
+            if chain['tag'].lower() == tag.lower():
+                return chain
 
 
 def load_config(fpath: str = "config.yml") -> Union[Config, None]:
@@ -41,4 +48,4 @@ def load_config(fpath: str = "config.yml") -> Union[Config, None]:
 
 
 if __name__ == '__main__':
-    print(load_config())
+    print(load_config().chain("eth"))
