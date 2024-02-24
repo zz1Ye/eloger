@@ -10,7 +10,7 @@ import bisect
 
 from abc import ABCMeta, abstractmethod
 
-from utils import get_hash
+from utils.data import get_hash
 
 
 class Bucket(metaclass=ABCMeta):
@@ -19,15 +19,15 @@ class Bucket(metaclass=ABCMeta):
 
     @abstractmethod
     def get(self, **kwargs):
-        raise NotImplementedError("Subclasses must implement abstract_method.")
+        pass
 
     @abstractmethod
     def push(self, node: str):
-        raise NotImplementedError("Subclasses must implement abstract_method.")
+        pass
 
     @abstractmethod
     def pop(self, node: str):
-        raise NotImplementedError("Subclasses must implement abstract_method.")
+        pass
 
 
 class ConHashBucket(Bucket):

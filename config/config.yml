@@ -7,7 +7,6 @@ CHAINS:
         - "7MM6JYY49WZBXSYFDPYQ3V7V3EMZWE4KJK"
     nodes:
       - api: "https://eth-mainnet.alchemyapi.io/v2/AgKT8OzbNsYnul856tenwnsnL3Pm7WRB"
-        weight: 1
 
   - name: "Binance Smart Chain"
     tag: "BSC"
@@ -18,21 +17,13 @@ CHAINS:
         - "EGAQYID9BS2H4YC3WJITVZTXDHYSWIUJDS"
     nodes:
       - api: "https://bsc-dataseed1.ninicoin.io/"
-        weight: 1
       - api: "https://bsc-dataseed2.ninicoin.io/"
-        weight: 1
       - api: "https://bsc-dataseed3.ninicoin.io/"
-        weight: 1
       - api: "https://bsc-dataseed4.ninicoin.io/"
-        weight: 1
       - api: "https://bsc-dataseed1.defibit.io/"
-        weight: 1
       - api: "https://bsc-dataseed2.defibit.io/"
-        weight: 1
       - api: "https://bsc-dataseed3.defibit.io/"
-        weight: 1
       - api: "https://bsc-dataseed4.defibit.io/"
-        weight: 1
 
   - name: "Polygon"
     tag: "POL"
@@ -42,7 +33,5 @@ CHAINS:
         - "7BTFI86WFGAAD91X2AGSF7YWBWC3M4R39S"
     nodes:
       - api: "https://polygon-rpc.com"
-        weight: 1
       - api: "https://rpc-mainnet.maticvigil.com"
-        weight: 1
 

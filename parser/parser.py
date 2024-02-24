@@ -23,7 +23,6 @@ from utils import camel_to_snake
 from utils.bucket import ConHashBucket
 
 import warnings
-
 warnings.filterwarnings(action='ignore', category=Warning)
 
 
