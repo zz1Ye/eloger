@@ -16,30 +16,28 @@ from tqdm import tqdm
 from web3 import Web3
 from hexbytes import HexBytes
 
-from config import ChainEnum
-from config import Config
+from config.config import Chain, Config
 from parser.item import EventLog
 from utils import camel_to_snake
 from utils.bucket import ConHashBucket
 
 import warnings
 warnings.filterwarnings(action='ignore', category=Warning)
+conf = Config()
 
 
 class Parser:
-    def __init__(self, chain: ChainEnum):
-        self.chain = chain.value
-        self.nodes = Config().NODE[self.chain]
-        self.scan = Config().SCAN[self.chain]
+    def __init__(self, chain: Chain):
+        self.chain = chain
         self.a_bucket, self.n_bucket = ConHashBucket(), ConHashBucket()
 
         # Api_key load balancing
-        for api_key in self.scan.API_KEY:
+        for api_key in self.chain.scan.keys:
             self.a_bucket.push(api_key)
 
         # Node load balancing
-        for node in self.nodes:
-            self.n_bucket.push(node.API)
+        for node in self.chain.nodes:
+            self.n_bucket.push(node.api)
 
     def get_abi(self, address: str) -> dict:
         address, api_key = address.lower(), self.a_bucket.get(address)

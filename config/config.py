@@ -20,11 +20,20 @@ logging.basicConfig(
 )
 
 
+class Scan(BaseModel):
+    api: str
+    keys: List[str]
+
+
+class Node(BaseModel):
+    api: str
+
+
 class Chain(BaseModel):
     name: str
     tag: str
-    scan: Dict
-    nodes: List[Dict]
+    scan: Scan
+    nodes: List[Node]
 
 
 class Config(BaseSettings):
@@ -35,7 +44,7 @@ class Config(BaseSettings):
     INPUT_DIR: str = DATA_DIR + "/input"
     CHAINS: List[Chain]
 
-    def chain(self, tag: str = "ETH") -> Union[Dict, None]:
+    def chain(self, tag: str = "ETH") -> Union[Chain, None]:
         for chain in self.CHAINS:
             if chain.tag.lower() == tag.lower():
                 return chain
@@ -57,4 +66,4 @@ def load_config(fpath: str = "config.yml") -> Union[Config, None]:
 
 
 if __name__ == '__main__':
-    print(load_config().chain("eth"))
+    print(load_config().chain("pol"))
