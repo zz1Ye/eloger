@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-@File    : parser.py
+@File    : digger.py
 @Time    : 2023/07/26 16:13
 @Author  : zzYe
 
@@ -16,14 +16,14 @@ from tqdm import tqdm
 from web3 import Web3
 from hexbytes import HexBytes
 
-from config.config import Chain, Config
-from parser.item import EventLog
+from config.config import Chain, Config, load_config
+from digger.item import EventLog
 from utils import camel_to_snake
 from utils.bucket import ConHashBucket
 
 import warnings
 warnings.filterwarnings(action='ignore', category=Warning)
-conf = Config()
+conf = load_config()
 
 
 class Parser:
@@ -41,16 +41,17 @@ class Parser:
 
     def get_abi(self, address: str) -> dict:
         address, api_key = address.lower(), self.a_bucket.get(address)
-        if not os.path.exists(Config().ABI_DIR):
-            os.makedirs(Config().ABI_DIR)
+        if not os.path.exists(load_config().ABI_DIR):
+            os.makedirs(load_config().ABI_DIR)
 
-        abi_fpath = Config().ABI_DIR + '/' + address + '.json'
+        abi_fpath = load_config().ABI_DIR + '/' + address + '.json'
         if os.path.exists(abi_fpath):
             with open(abi_fpath, 'r') as f:
                 abi = json.load(f)
         else:
-            abi_endpoint = self.scan.API + f"?module=contract&action=getabi&address={address}&apikey={api_key}"
+            abi_endpoint = self.chain.scan.api + f"?module=contract&action=getabi&address={address}&apikey={api_key}"
             abi = json.loads(requests.get(abi_endpoint).text)
+            print(type(abi))
 
             with open(abi_fpath, 'w') as f:
                 json.dump(abi, f)

@@ -6,6 +6,10 @@
 @Author  : zzYe
 
 """
-from parser.item import (
+from digger.item import (
     EventLog
+)
+
+from digger.parser import (
+    Parser
 )

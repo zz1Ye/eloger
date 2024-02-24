@@ -11,13 +11,14 @@ import yaml
 import logging
 
 from pydantic import BaseModel
-from typing import List, Dict, Union
+from typing import List, Union
 from pydantic_settings import BaseSettings
 
 
 logging.basicConfig(
     level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s'
 )
+ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
 
 
 class Scan(BaseModel):
@@ -37,7 +38,7 @@ class Chain(BaseModel):
 
 
 class Config(BaseSettings):
-    PROJECT: str = os.path.abspath(os.path.dirname(__file__))
+    PROJECT: str = ROOT_PATH
     DATA_DIR: str = PROJECT + "/data"
     ABI_DIR: str = DATA_DIR + "/abi"
     LOG_DIR: str = DATA_DIR + "/log"
@@ -50,7 +51,7 @@ class Config(BaseSettings):
                 return chain
 
 
-def load_config(fpath: str = "config.yml") -> Union[Config, None]:
+def load_config(fpath: str = ROOT_PATH + "/config.yml") -> Union[Config, None]:
     try:
         with open(fpath, 'r') as file:
             data = yaml.safe_load(file)

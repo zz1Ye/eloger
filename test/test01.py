@@ -2,7 +2,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from config import ChainEnum
-from parser.parser import Parser
+from digger.parser import Parser
 
 if __name__ == '__main__':
 
