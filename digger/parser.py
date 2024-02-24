@@ -17,6 +17,7 @@ from web3 import Web3
 from hexbytes import HexBytes
 
 from config.config import Chain, Config, load_config
+from dao import JsonDao
 from digger.item import EventLog
 from utils import camel_to_snake
 from utils.bucket import ConHashBucket
@@ -27,8 +28,8 @@ conf = load_config()
 
 
 class Parser:
-    def __init__(self, chain: Chain):
-        self.chain = chain
+    def __init__(self, tag: str, config: Config, dao: JsonDao):
+        self.chain = config.chain(tag)
         self.a_bucket, self.n_bucket = ConHashBucket(), ConHashBucket()
 
         # Api_key load balancing
