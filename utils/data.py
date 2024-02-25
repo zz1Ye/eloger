@@ -7,7 +7,7 @@
 
 """
 import hashlib
-from typing import Dict, Any
+from typing import Dict, Any, Union, List
 
 from hexbytes import HexBytes
 
@@ -20,7 +20,7 @@ def get_hash(raw_str: str) -> int:
     return int(md5_str, 16)
 
 
-def hexbytes_to_str(data: Dict[str, Any]) -> Dict[str, str]:
+def hexbytes_to_str(data: Dict[str, Any]) -> Union[dict, list[dict[str, str]], str]:
     if isinstance(data, dict):
         return {key: hexbytes_to_str(value) for key, value in data.items()}
     elif isinstance(data, list):
