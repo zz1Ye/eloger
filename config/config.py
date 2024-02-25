@@ -14,7 +14,6 @@ from pydantic import BaseModel
 from typing import List, Union
 from pydantic_settings import BaseSettings
 
-
 logging.basicConfig(
     level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s'
 )
@@ -65,7 +64,3 @@ def load_config(fpath: str = CUR_PATH + "/config.yml") -> Union[Config, None]:
         logging.error(
             f"An error occurred while parsing file {fpath}: {e}"
         )
-
-
-if __name__ == '__main__':
-    print(load_config())
