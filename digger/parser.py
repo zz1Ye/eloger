@@ -17,7 +17,7 @@ from hexbytes import HexBytes
 
 from config.config import Config
 from dao import JsonDao
-from digger.item import EventLog
+from digger.item import EventLog, Input
 from utils import camel_to_snake
 from utils.bucket import ConHashBucket
 from utils.data import hexbytes_to_str
@@ -76,7 +76,10 @@ class Parser:
         if input_data is not None:
             return input_data[0]
         else:
-            input_data = {}
+            input_data = Input.model_validate({
+                "transaction_hash": tx_hash,
+                "args": {}
+            })
 
         w3 = Web3(Web3.HTTPProvider(
             self.node_bucket.get(tx_hash)
@@ -98,15 +101,17 @@ class Parser:
         if function_abi_entry:
             decoded_input = contract.decode_function_input(transaction_input)
 
+            args = {}
             for i, (param_name, param_value) in enumerate(zip(function_abi_entry['inputs'], decoded_input)):
                 if isinstance(param_value, dict):
-                    input_data[param_name['name']] = {
+                    args[param_name['name']] = {
                         key: ('0x' + value.hex().lstrip('0') if isinstance(value, bytes) else value)
                         for key, value in param_value.items()
                     }
                 else:
-                    input_data[param_name['name']] = param_value
-            input_data = hexbytes_to_str(input_data)
+                    args[param_name['name']] = param_value
+            input_data.args = args
+            input_data = hexbytes_to_str(input_data.model_dump())
             dao.save(input_data, mode='w')
 
         return input_data

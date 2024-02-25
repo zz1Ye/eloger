@@ -11,6 +11,11 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class Input(BaseModel):
+    transaction_hash: str
+    args: Optional[dict] = None
+
+
 class EventLog(BaseModel):
     transaction_hash: str
     address: str
