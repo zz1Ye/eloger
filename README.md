@@ -1,9 +1,9 @@
 # eloger
 
-> 📓 This is a tool that focuses on the parsing of smart contract event logs. By using the `web3` framework to obtain all event logs of a specific transaction and parse the events in the log, the complete information of the log is obtained. 
+> 📓 This is a tool that focuses on the parsing of smart contract event logs and input data. By using the `web3` framework to obtain all event logs of a specific transaction and parse the events in the log, the complete information of the log is obtained. 
 
 
-## Install
+## 🔰 Install
 
 Before you start, enter the following command in the virtual environment.
 
@@ -14,7 +14,7 @@ pip install -r requirements.txt
 🙌 Here, the python version used in this project is `3.9.12`.
 
 
-## Testing
+## 🧪 Testing
 
 The test code is in the test.py file of the test module, and the test content is mainly based on the `Binance Chain(BNB)` as an example. Part of them are as follows.
 
@@ -25,7 +25,7 @@ elogs = parser.get_event_logs(tx_hash)
 ```
 
 
-## Other chains
+## 👑 Other chains
 
 If you need to parse event logs on other chains, you can add relevant configuration in the `config.py`. Now take `Ethereum(ETH)` as an example.
 

@@ -63,42 +63,54 @@ class Parser:
             }
         )
         abi = json.loads(requests.get(abi_endpoint).text)
-        dao.save(abi)
+        dao.save(abi, mode='w')
 
         return abi
 
-    def parse_input(self, tx_hash: str):
+    def parse_input(self, tx_hash: str) -> dict:
+        tx_hash = tx_hash.lower()
+
+        dao = JsonDao(
+            self.config.INPUT_DIR + '/' + tx_hash + '.json'
+        )
+        input_data = dao.load()
+        if input_data is not None:
+            return input_data[0]
+        else:
+            input_data = {}
+
         w3 = Web3(Web3.HTTPProvider(
             self.node_bucket.get(tx_hash)
         ))
         transaction = w3.eth.get_transaction(HexBytes(tx_hash))
         transaction_input = transaction['input']
 
-        # 解析交易的input字段
-        function_signature = transaction_input[:10]  # 函数签名是前10个字符
-        contract = w3.eth.contract(abi=self.get_abi("0x609c690e8F7D68a59885c9132e812eEbDaAf0c9e")["result"])
-        # 打印所有函数名
-        for function in contract.abi:
-            if function['type'] == 'function':
-                print('函数名:', function['name'])
+        # Parsing input data
+        function_signature = transaction_input[:10]
+        contract = w3.eth.contract(abi=self.get_abi(transaction['to'])["result"])
         function = contract.get_function_by_selector(function_signature)
 
-        # 找到对应函数的ABI描述
         function_abi_entry = next(
-            (abi for abi in contract.abi if abi['type'] == 'function' and abi.get('name') == 'swapAndBridge'),
-            None)
+            (
+                abi for abi in contract.abi if
+                abi['type'] == 'function' and abi.get('name') == function.function_identifier
+            ), None)
 
         if function_abi_entry:
-            # 解码函数输入参数
             decoded_input = contract.decode_function_input(transaction_input)
 
             for i, (param_name, param_value) in enumerate(zip(function_abi_entry['inputs'], decoded_input)):
-                print(f"Parameter {i + 1}: {param_name['name']} = {param_value}")
-                if isinstance(param_value, dict):  # 判断变量是否为字典类型
-                    print({key: ('0x' + value.hex().lstrip('0') if isinstance(value, bytes) else value)
-                           for key, value in param_value.items()})
-        else:
-            print("Function ABI not found")
+                if isinstance(param_value, dict):
+                    input_data[param_name['name']] = {
+                        key: ('0x' + value.hex().lstrip('0') if isinstance(value, bytes) else value)
+                        for key, value in param_value.items()
+                    }
+                else:
+                    input_data[param_name['name']] = param_value
+            input_data = hexbytes_to_str(input_data)
+            dao.save(input_data, mode='w')
+
+        return input_data
 
     def get_event_logs(self, tx_hash: str) -> List[dict]:
         tx_hash = tx_hash.lower()
@@ -150,7 +162,6 @@ class Parser:
                     break
 
             elogs.append(hexbytes_to_str(elog.model_dump()))
-            print(hexbytes_to_str(elog.model_dump()))
         dao.save(elogs)
 
         return elogs
@@ -158,4 +169,4 @@ class Parser:
 
 if __name__ == '__main__':
     parser = Parser("ETH", load_config())
-    print(parser.get_event_logs("0x2f13d202c301c8c1787469310a2671c8b57837eb7a8a768df857cbc7b3ea32d8"))
+    print(parser.parse_input("0x2f13d202c301c8c1787469310a2671c8b57837eb7a8a768df857cbc7b3ea32d8"))
