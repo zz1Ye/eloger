@@ -6,15 +6,6 @@
 @Author  : zzYe
 
 """
-import hashlib
-
-
-# def get_hash(raw_str: str) -> int:
-#     """
-#     Map strings to 2 ^ 32 numbers
-#     """
-#     md5_str = hashlib.md5(raw_str.encode('utf-8')).hexdigest()
-#     return int(md5_str, 16)
 
 
 def insert_char_at_index(string_input: str, index: int, char: str) -> str:
