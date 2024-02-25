@@ -166,7 +166,3 @@ class Parser:
 
         return elogs
 
-
-if __name__ == '__main__':
-    parser = Parser("ETH", load_config())
-    print(parser.parse_input("0x2f13d202c301c8c1787469310a2671c8b57837eb7a8a768df857cbc7b3ea32d8"))
