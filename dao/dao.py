@@ -9,15 +9,32 @@
 import json
 import logging
 from pathlib import Path
+from typing import List, Union
 
 
 class JsonDao:
     def __init__(self, fpath: str):
         self.path = Path(fpath)
 
-    def save(self, data: dict) -> None:
+    def save(self, data: Union[dict, List[dict]], mode: str = 'a') -> None:
+        valid_modes = ['w', 'a']
+        if mode not in valid_modes:
+            raise ValueError(
+                "Invalid mode. Use either 'w' for write (overwrite) or 'a' for append."
+            )
+
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.path.touch(exist_ok=True)
+
+        if isinstance(data, dict):
+            data = [data]
+
+        if mode == 'a':
+            origin = self.load()
+            if origin is None:
+                origin = []
+
+            data.extend(origin)
 
         with self.path.open('w', encoding='utf-8') as json_file:
             json.dump(
@@ -25,9 +42,9 @@ class JsonDao:
                 ensure_ascii=False, indent=4
             )
 
-    def load(self) -> dict:
+    def load(self) -> Union[List[dict], None]:
         if not self.path.exists():
-            return {}
+            return None
 
         try:
             with self.path.open('r', encoding='utf-8') as json_file:
@@ -36,13 +53,4 @@ class JsonDao:
             logging.error(
                 f"Json file {self.path} cannot be parsed: {e}"
             )
-            return {}
-
-    def update(self, key: str, value) -> bool:
-        data = self.load()
-        if data is None or key not in data:
-            return False
-
-        data[key] = value
-        self.save(data)
-        return True
+            return None
