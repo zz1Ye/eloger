@@ -7,6 +7,9 @@
 
 """
 import hashlib
+from typing import Dict, Any
+
+from hexbytes import HexBytes
 
 
 def get_hash(raw_str: str) -> int:
@@ -15,3 +18,14 @@ def get_hash(raw_str: str) -> int:
     """
     md5_str = hashlib.md5(raw_str.encode('utf-8')).hexdigest()
     return int(md5_str, 16)
+
+
+def hexbytes_to_str(data: Dict[str, Any]) -> Dict[str, str]:
+    if isinstance(data, dict):
+        return {key: hexbytes_to_str(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [hexbytes_to_str(item) for item in data]
+    elif isinstance(data, HexBytes):
+        return data.hex()
+    else:
+        return f"{data}"

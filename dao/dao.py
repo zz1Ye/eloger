@@ -48,7 +48,10 @@ class JsonDao:
 
         try:
             with self.path.open('r', encoding='utf-8') as json_file:
-                return json.load(json_file)
+                content = json_file.read()
+                if not content.strip():
+                    return None
+                return json.loads(content)
         except json.JSONDecodeError as e:
             logging.error(
                 f"Json file {self.path} cannot be parsed: {e}"

@@ -18,7 +18,8 @@ from pydantic_settings import BaseSettings
 logging.basicConfig(
     level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s'
 )
-ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
+CUR_PATH = os.path.abspath(os.path.dirname(__file__))
+ROOT_PATH = os.path.abspath(os.path.join(CUR_PATH, os.pardir))
 
 
 class Scan(BaseModel):
@@ -51,7 +52,7 @@ class Config(BaseSettings):
                 return chain
 
 
-def load_config(fpath: str = ROOT_PATH + "/config.yml") -> Union[Config, None]:
+def load_config(fpath: str = CUR_PATH + "/config.yml") -> Union[Config, None]:
     try:
         with open(fpath, 'r') as file:
             data = yaml.safe_load(file)
@@ -67,4 +68,4 @@ def load_config(fpath: str = ROOT_PATH + "/config.yml") -> Union[Config, None]:
 
 
 if __name__ == '__main__':
-    print(load_config().chain("pol"))
+    print(load_config())
