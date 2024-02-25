@@ -15,8 +15,7 @@ from tqdm import tqdm
 from web3 import Web3
 from hexbytes import HexBytes
 
-import dao
-from config.config import Config, load_config
+from config.config import Config
 from dao import JsonDao
 from digger.item import EventLog
 from utils import camel_to_snake
