@@ -16,7 +16,7 @@ pip install -r requirements.txt
 
 ## 🧪 Parsing
 
-The test code is in the test.py file of the test module, 
+The test code is in the `test.py` file of the `test` module, 
 and the test content is mainly based on the `Binance Chain(BSC)` as an example. 
 Part of them are as follows.
 
