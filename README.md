@@ -60,4 +60,4 @@ Where `tag` will be used as the identifier of the chain parameter in the functio
 `scan` is the browser API corresponding to the chain, and there can be multiple `keys`.
 `node` is the node API corresponding to the chain, and there can be multiple.
 
-💡 In addition, you need to ensure that the `YML format` of the added chain is correct (note the necessary `indentation`).
+💡 Ensure correct `YML` formatting for the added chain, with proper `indentation`.
