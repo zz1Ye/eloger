@@ -27,5 +27,7 @@ def hexbytes_to_str(data: Dict[str, Any]) -> Union[dict, list[dict[str, str]], s
         return [hexbytes_to_str(item) for item in data]
     elif isinstance(data, HexBytes):
         return data.hex()
+    elif isinstance(data, bytes):
+        return data.hex()
     else:
         return f"{data}"
