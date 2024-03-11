@@ -141,29 +141,33 @@ class Parser:
             elog = EventLog.model_validate(elog_dict)
 
             # Get abi
-            abi = self.get_abi(elog.address)
-            contract = w3.eth.contract(
-                w3.to_checksum_address(elog.address), abi=abi["result"]
-            )
+            try:
+                abi = self.get_abi(elog.address)
 
-            # Get event signature of log (first item in topics array)
-            receipt_event_signature_hex = w3.to_hex(elog.topics[0])
+                contract = w3.eth.contract(
+                    w3.to_checksum_address(elog.address), abi=abi["result"]
+                )
 
-            # Find events
-            events = [e for e in contract.abi if e["type"] == "event"]
-            for event in events:
-                # Get event signature components
-                name = event["name"]
-                inputs = ",".join([param["type"] for param in event["inputs"]])
-                # Hash event signature
-                event_signature_text = f"{name}({inputs})"
-                event_signature_hex = w3.to_hex(w3.keccak(text=event_signature_text))
+                # Get event signature of log (first item in topics array)
+                receipt_event_signature_hex = w3.to_hex(elog.topics[0])
 
-                # Find match between log's event signature and ABI's event signature
-                if event_signature_hex == receipt_event_signature_hex:
-                    decoded_log = dict(contract.events[event["name"]]().process_receipt(receipt)[0])
-                    elog.event, elog.args = decoded_log['event'], dict(decoded_log['args'])
-                    break
+                # Find events
+                events = [e for e in contract.abi if e["type"] == "event"]
+                for event in events:
+                    # Get event signature components
+                    name = event["name"]
+                    inputs = ",".join([param["type"] for param in event["inputs"]])
+                    # Hash event signature
+                    event_signature_text = f"{name}({inputs})"
+                    event_signature_hex = w3.to_hex(w3.keccak(text=event_signature_text))
+
+                    # Find match between log's event signature and ABI's event signature
+                    if event_signature_hex == receipt_event_signature_hex:
+                        decoded_log = dict(contract.events[event["name"]]().process_receipt(receipt)[0])
+                        elog.event, elog.args = decoded_log['event'], dict(decoded_log['args'])
+                        break
+            except Exception as e:
+                continue
 
             elogs.append(hexbytes_to_str(elog.model_dump()))
         dao.save(elogs)
