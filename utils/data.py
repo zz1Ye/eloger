@@ -9,6 +9,7 @@
 import hashlib
 from typing import Dict, Any, Union, List
 
+from web3.datastructures import AttributeDict
 from hexbytes import HexBytes
 
 
@@ -21,6 +22,8 @@ def get_hash(raw_str: str) -> int:
 
 
 def hexbytes_to_str(data: Dict[str, Any]) -> Union[dict, list[dict[str, str]], str]:
+    if isinstance(data, AttributeDict):
+        return {key: hexbytes_to_str(value) for key, value in dict(data).items()}
     if isinstance(data, dict):
         return {key: hexbytes_to_str(value) for key, value in data.items()}
     elif isinstance(data, list):
