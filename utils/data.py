@@ -21,16 +21,14 @@ def get_hash(raw_str: str) -> int:
     return int(md5_str, 16)
 
 
-def hexbytes_to_str(data: Dict[str, Any]) -> Union[dict, list[dict[str, str]], str]:
+def hexbytes_to_str(data: Dict[str, Any]) -> Union[Dict[str, str], List[Dict[str, str]], str]:
     if isinstance(data, AttributeDict):
         return {key: hexbytes_to_str(value) for key, value in dict(data).items()}
     if isinstance(data, dict):
         return {key: hexbytes_to_str(value) for key, value in data.items()}
     elif isinstance(data, list):
         return [hexbytes_to_str(item) for item in data]
-    elif isinstance(data, HexBytes):
-        return data.hex()
-    elif isinstance(data, bytes):
+    elif isinstance(data, (HexBytes, bytes)):
         return data.hex()
     else:
-        return f"{data}"
+        return str(data)
