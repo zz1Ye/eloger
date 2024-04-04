@@ -33,7 +33,9 @@ class Config(BaseModel):
 
     def __init__(self):
         super().__init__()
-        self.chainer = Chainer(**load_config(f"{CUR_DIR}/_chain.yml"))
+
+        chains = load_config(f"{CUR_DIR}/_chain.yml")
+        self.chainer = Chainer(**chains) if chains is not None else None
 
 
 def load_config(fpath: str) -> Union[Any, None]:
@@ -50,8 +52,3 @@ def load_config(fpath: str) -> Union[Any, None]:
             f"An error occurred while parsing file {fpath}: {e}"
         )
     return None
-
-
-if __name__ == '__main__':
-    conf = Config()
-    print(conf)
