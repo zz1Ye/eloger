@@ -9,16 +9,22 @@
 from typing import Any
 
 from conf import Chain
+from dao import JsonDao
 from spider import Spider
 from utils.url import join_url
 
 
 class ABISpider(Spider):
-    def __init__(self, chain: Chain):
-        super().__init__(chain)
+    def __init__(self, chain: Chain, dir: str):
+        super().__init__(chain, dir)
 
     def crawl_abi(self, address: str) -> Any:
         address = address.lower()
+
+        dao = JsonDao(f"{self.dir}/{address}.json")
+        abi = dao.load()
+        if abi is not None:
+            return abi[0]
 
         api_key = self.scan_bucket.get(address)
         url = join_url(
@@ -31,8 +37,11 @@ class ABISpider(Spider):
             }
         )
 
-        return self._crawl(
+        abi = self._crawl(
             url=url,
             method="GET"
         )
+        dao.save([abi], mode='w')
+
+        return abi
 

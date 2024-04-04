@@ -7,6 +7,7 @@
 
 """
 import json
+import os
 from abc import ABC
 
 import requests
@@ -23,8 +24,12 @@ class CrawlParams(NamedTuple):
 
 
 class Spider(ABC):
-    def __init__(self, chain: Chain):
+    def __init__(self, chain: Chain, dir: str):
         self.chain = chain
+        self.dir = dir
+        if not os.path.exists(self.dir):
+            os.makedirs(self.dir)
+
         self.scan_bucket, self.node_bucket = ConHashBucket(), ConHashBucket()
 
         # Api key load balancing

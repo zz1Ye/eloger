@@ -9,15 +9,21 @@
 from typing import Any
 
 from conf import Chain
+from dao import JsonDao
 from spider import Spider
 
 
 class TxTraceSpider(Spider):
-    def __init__(self, chain: Chain):
-        super().__init__(chain)
+    def __init__(self, chain: Chain, dir: str):
+        super().__init__(chain, dir)
 
     def crawl_tx_trace(self, tx_hash: str) -> Any:
         tx_hash = tx_hash.lower()
+
+        dao = JsonDao(f"{self.dir}/{tx_hash}.json")
+        trace = dao.load()
+        if trace is not None:
+            return trace[0]
 
         headers = {
             "accept": "application/json",
@@ -31,12 +37,16 @@ class TxTraceSpider(Spider):
             "params": [tx_hash]
         }
 
-        return self._crawl(
+        trace = self._crawl(
             url=self.node_bucket.get(tx_hash),
             method="POST",
             headers=headers,
             payload=payload,
         )
+        dao.save([trace], mode='w')
+
+        return trace
+
 
 
 
