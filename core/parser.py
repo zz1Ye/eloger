@@ -40,8 +40,11 @@ class Parser:
             self.node_bucket.push(node.api)
 
     def get_implementation_contract(self, tx_hash: str, address: str) -> str:
-        spider = TxTraceSpider(self.chain, self.config.TRACE_DIR)
-        trace = spider.crawl_tx_trace(tx_hash)["result"]
+        try:
+            spider = TxTraceSpider(self.chain, self.config.TRACE_DIR)
+            trace = spider.crawl_tx_trace(tx_hash)["result"]
+        except Exception:
+            return address.lower()
 
         try:
             implementation = next(
