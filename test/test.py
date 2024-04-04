@@ -23,16 +23,16 @@ if __name__ == '__main__':
 
     # BSC Test --- Parsing event logs
     tx_hash = "0xe82d9c4362cede63f93e381700ff01b8dd28c3de2eec4b2f077b3dc2beb4f088"
-    digger = Parser("BSC", config)
-    elogs = digger.parse_event_logs(tx_hash)
+    parser = Parser("BSC", config)
+    elogs = parser.parse_event_logs(tx_hash)
 
     for elog in elogs:
         print(elog)
 
     # Polygon Test --- Parsing event logs
     tx_hash = "0x92641e15f1f7ed839072e015369886f17fcd4ca31ad08f75c87d130369b6b1b5"
-    digger = Parser("POL", config)
-    elogs = digger.parse_event_logs(tx_hash)
+    parser = Parser("POL", config)
+    elogs = parser.parse_event_logs(tx_hash)
 
     for elog in elogs:
         print(elog)
