@@ -174,9 +174,3 @@ class Parser:
             return input_data
 
         return _parse_input(id=tx_hash)
-
-
-if __name__ == '__main__':
-    cof = Config()
-    parser = Parser(tag="ETH", config=cof)
-    print(parser.parse_input("0x0008bf6fb2703fbf803709de57a790d58c818184beea041b7022e2050edc091f"))
