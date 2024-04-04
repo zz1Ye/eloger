@@ -26,6 +26,7 @@ class Config(BaseModel):
     PROJECT: str = ROOT_DIR
     DATA_DIR: str = PROJECT + "/data"
     ABI_DIR: str = DATA_DIR + "/abi"
+    TRACE_DIR: str = DATA_DIR + "/trace"
     LOG_DIR: str = DATA_DIR + "/log"
     INPUT_DIR: str = DATA_DIR + "/input"
 
