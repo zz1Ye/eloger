@@ -43,7 +43,7 @@ The input data is saved in the `input` folder in the `data` folder.
 ## 👑 Other chains
 
 If you need to parse event logs on other chains,
-you can add the relevant configuration in `_chain.yml` under the `config` module. 
+you can add the relevant configuration in `_chain.yml` under the `conf` module. 
 Now take `Ethereum (ETH)` as an example.
 
 ```Python
