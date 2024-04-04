@@ -6,10 +6,7 @@ chains:
       keys:
         - "7MM6JYY49WZBXSYFDPYQ3V7V3EMZWE4KJK"
     nodes:
-      - api: "https://mainnet.chainnodes.org/f21d29b2-62e8-490c-97fe-01ac44dd6344"
-#      - api: "https://eth-mainnet.alchemyapi.io/v2/AgKT8OzbNsYnul856tenwnsnL3Pm7WRB"
-#      - api: "https://cloudflare-eth.com"
-
+      - api: "https://cloudflare-eth.com"
 
   - name: "Binance Smart Chain"
     tag: "BSC"
