@@ -29,7 +29,7 @@ if __name__ == '__main__':
     for elog in elogs:
         print(elog)
 
-    # Polygon Test --- Parsing event logs
+    # # Polygon Test --- Parsing event logs
     tx_hash = "0x92641e15f1f7ed839072e015369886f17fcd4ca31ad08f75c87d130369b6b1b5"
     parser = Parser("POL", config)
     elogs = parser.parse_event_logs(tx_hash)
