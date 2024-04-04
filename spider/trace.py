@@ -9,7 +9,7 @@
 from typing import Any
 
 from conf import Chain
-from spider.base import Spider
+from spider import Spider
 
 
 class TxTraceSpider(Spider):

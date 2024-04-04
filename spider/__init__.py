@@ -8,5 +8,5 @@
 """
 
 from spider._meta import (
-    CrawlParams
+    CrawlParams, Spider
 )
