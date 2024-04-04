@@ -9,7 +9,7 @@
 from typing import Any
 
 from conf import Chain
-from dao import JsonDao
+from dao.tool import load_and_save
 from spider import Spider
 from utils.url import join_url
 
@@ -21,27 +21,25 @@ class ABISpider(Spider):
     def crawl_abi(self, address: str) -> Any:
         address = address.lower()
 
-        dao = JsonDao(f"{self.dir}/{address}.json")
-        abi = dao.load()
-        if abi is not None:
-            return abi[0]
+        @load_and_save(self.dir)
+        def _crawl_abi(id: str):
+            api_key = self.scan_bucket.get(address)
+            url = join_url(
+                self.chain.scan.api,
+                {
+                    "module": "contract",
+                    "action": "getabi",
+                    "address": address,
+                    "apikey": api_key
+                }
+            )
 
-        api_key = self.scan_bucket.get(address)
-        url = join_url(
-            self.chain.scan.api,
-            {
-                "module": "contract",
-                "action": "getabi",
-                "address": address,
-                "apikey": api_key
-            }
-        )
+            return self._crawl(
+                url=url,
+                method="GET"
+            )
 
-        abi = self._crawl(
-            url=url,
-            method="GET"
-        )
-        dao.save([abi], mode='w')
+        return _crawl_abi(id=address)
 
-        return abi
+
 

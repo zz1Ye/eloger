@@ -9,7 +9,7 @@
 from typing import Any
 
 from conf import Chain
-from dao import JsonDao
+from dao.tool import load_and_save
 from spider import Spider
 
 
@@ -20,32 +20,30 @@ class TxTraceSpider(Spider):
     def crawl_tx_trace(self, tx_hash: str) -> Any:
         tx_hash = tx_hash.lower()
 
-        dao = JsonDao(f"{self.dir}/{tx_hash}.json")
-        trace = dao.load()
-        if trace is not None:
-            return trace[0]
+        @load_and_save(self.dir)
+        def _crawl_tx_trace(id: str):
+            headers = {
+                "accept": "application/json",
+                "content-type": "application/json"
+            }
 
-        headers = {
-            "accept": "application/json",
-            "content-type": "application/json"
-        }
+            payload = {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "method": "trace_transaction",
+                "params": [id]
+            }
 
-        payload = {
-            "id": 1,
-            "jsonrpc": "2.0",
-            "method": "trace_transaction",
-            "params": [tx_hash]
-        }
+            return self._crawl(
+                url=self.node_bucket.get(tx_hash),
+                method="POST",
+                headers=headers,
+                payload=payload,
+            )
 
-        trace = self._crawl(
-            url=self.node_bucket.get(tx_hash),
-            method="POST",
-            headers=headers,
-            payload=payload,
-        )
-        dao.save([trace], mode='w')
+        return _crawl_tx_trace(id=tx_hash)
 
-        return trace
+
 
 
 
