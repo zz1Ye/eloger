@@ -13,7 +13,6 @@ from web3 import Web3
 from hexbytes import HexBytes
 
 from conf.core import Config
-from dao import JsonDao
 from core import EventLog, Input
 from dao.tool import load_and_save
 from spider.contract import ABISpider
@@ -156,38 +155,28 @@ class Parser:
 
             if function_abi_entry:
                 decoded_input = contract.decode_function_input(transaction_input)
+                input_data.function = function.function_identifier
 
-                args = {}
-                for i, (param_name, param_value) in enumerate(zip(function_abi_entry['inputs'], decoded_input)):
-                    print(i, (param_name, param_value))
-                    exit(0)
-                    if isinstance(param_value, dict):
-                        args[param_name['name']] = {
-                            key: ('0x' + value.hex().lstrip('0') if isinstance(value, bytes) else value)
-                            for key, value in param_value.items()
-                        }
+                args, formal_params = {}, []
+                for param in function_abi_entry['inputs']:
+                    param_name, param_type = param['name'], param['type']
+                    param_value = decoded_input[1].get(param_name, None)
+
+                    formal_params.append(f"{param_type} {param_name}")
+                    if isinstance(param_value, bytes):
+                        args[param_name] = '0x' + param_value.hex().lstrip('0')
                     else:
-                        args[param_name['name']] = param_value
+                        args[param_name] = param_value
+
+                input_data.function = f"{function.function_identifier}({','.join(formal_params)})"
                 input_data.args = args
                 input_data = hexbytes_to_str(input_data.model_dump())
             return input_data
 
         return _parse_input(id=tx_hash)
-        # dao = JsonDao(
-        #     self.config.INPUT_DIR + '/' + tx_hash + '.json'
-        # )
-        # input_data = dao.load()
-        # if input_data is not None:
-        #     return input_data[0]
-        # else:
-        #     input_data = Input.model_validate({
-        #         "transaction_hash": tx_hash,
-        #         "args": {}
-        #     })
-
 
 
 if __name__ == '__main__':
     cof = Config()
     parser = Parser(tag="ETH", config=cof)
-    print(parser.parse_input("0xde06f7f44b8387dc8d315081c1681943df6e2670bb30b11a5e2c2738134a1c1a"))
+    print(parser.parse_input("0x0008bf6fb2703fbf803709de57a790d58c818184beea041b7022e2050edc091f"))
