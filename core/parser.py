@@ -15,9 +15,9 @@ from tqdm import tqdm
 from web3 import Web3
 from hexbytes import HexBytes
 
-from config.config import Config
+from conf.core import Config
 from dao import JsonDao
-from digger.item import EventLog, Input
+from spider._meta import EventLog, Input
 from utils import camel_to_snake
 from utils.bucket import ConHashBucket
 from utils.data import hexbytes_to_str
@@ -30,7 +30,7 @@ warnings.filterwarnings(action='ignore', category=Warning)
 class Parser:
     def __init__(self, tag: str, config: Config):
         self.config = config
-        self.chain = config.chain(tag)
+        self.chain = config.chainer.get(tag)
         self.scan_bucket, self.node_bucket = ConHashBucket(), ConHashBucket()
 
         # Api key load balancing
@@ -120,7 +120,7 @@ class Parser:
 
         return input_data
 
-    def get_event_logs(self, tx_hash: str) -> List[dict]:
+    def parse_event_logs(self, tx_hash: str) -> List[dict]:
         tx_hash = tx_hash.lower()
 
         dao = JsonDao(
@@ -137,6 +137,8 @@ class Parser:
         ))
         receipt = w3.eth.get_transaction_receipt(HexBytes(tx_hash))
         for item in tqdm(receipt["logs"]):
+            print(item)
+            exit(0)
             elog_dict = {
                 camel_to_snake(k): w3.to_hex(v) if isinstance(v, bytes)
                 else v for k, v in dict(item).items()
@@ -199,3 +201,8 @@ class Parser:
 
         return elogs
 
+
+if __name__ == '__main__':
+    cof = Config()
+    parser = Parser(tag="ETH", config=cof)
+    print(parser.parse_event_logs("0xde06f7f44b8387dc8d315081c1681943df6e2670bb30b11a5e2c2738134a1c1a"))

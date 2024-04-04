@@ -7,7 +7,7 @@
 
 """
 
-from typing import Optional
+from typing import Optional, NamedTuple, Dict, Any
 from pydantic import BaseModel
 
 
@@ -29,3 +29,9 @@ class EventLog(BaseModel):
 
     event: Optional[str] = None
     args: Optional[dict] = None
+
+
+class CrawlParams(NamedTuple):
+    url: str
+    method: str
+    params: Dict[str, Any]

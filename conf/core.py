@@ -13,7 +13,7 @@ import logging
 from pydantic import BaseModel
 from typing import Union, Any
 
-from conf.meta import Chainer
+from conf import Chainer
 
 logging.basicConfig(
     level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s'

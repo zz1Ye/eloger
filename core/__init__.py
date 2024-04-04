@@ -6,10 +6,10 @@
 @Author  : zzYe
 
 """
-from digger.item import (
-    EventLog
+from spider._meta import (
+    EventLog, Input, CrawlParams
 )
 
-from digger.parser import (
+from spider.parser import (
     Parser
 )
