@@ -13,6 +13,9 @@ from pydantic import BaseModel
 
 class Input(BaseModel):
     transaction_hash: str
+    input: str
+
+    function: str = None
     args: Optional[dict] = None
 
 

@@ -15,6 +15,7 @@ from hexbytes import HexBytes
 from conf.core import Config
 from dao import JsonDao
 from core import EventLog, Input
+from dao.tool import load_and_save
 from spider.contract import ABISpider
 from spider.trace import TxTraceSpider
 from utils import camel_to_snake
@@ -40,163 +41,153 @@ class Parser:
             self.node_bucket.push(node.api)
 
     def get_implementation_contract(self, tx_hash: str, address: str) -> str:
-        implementation = address.lower()
-
         spider = TxTraceSpider(self.chain, self.config.TRACE_DIR)
         trace = spider.crawl_tx_trace(tx_hash)["result"]
 
-        for t in trace:
-            action = t["action"]
-            if action["callType"].lower() == "delegatecall":
-                if action["from"].lower() == address.lower():
-                    implementation = action["to"].lower()
-                    break
+        try:
+            implementation = next(
+                t["action"]["to"].lower()
+                for t in trace
+                if (
+                        t["action"]["callType"].lower() == "delegatecall"
+                        and t["action"]["from"].lower() == address.lower()
+                )
+            )
+        except StopIteration:
+            implementation = address.lower()
 
         return implementation
-
-    def parse_input(self, tx_hash: str) -> dict:
-        tx_hash = tx_hash.lower()
-
-        dao = JsonDao(
-            self.config.INPUT_DIR + '/' + tx_hash + '.json'
-        )
-        input_data = dao.load()
-        if input_data is not None:
-            return input_data[0]
-        else:
-            input_data = Input.model_validate({
-                "transaction_hash": tx_hash,
-                "args": {}
-            })
-
-        w3 = Web3(Web3.HTTPProvider(
-            self.node_bucket.get(tx_hash)
-        ))
-        transaction = w3.eth.get_transaction(HexBytes(tx_hash))
-        transaction_input = transaction['input']
-
-        # Parsing input data
-        function_signature = transaction_input[:10]
-        tmp_addr = transaction['to']
-        if str(tmp_addr).lower() == "0xeF4fB24aD0916217251F553c0596F8Edc630EB66".lower():
-            tmp_addr = "0x7Ec2E51A9c4f088354aD8Ad8703C12D81BF21677".lower()
-
-        impl_address = self.get_implementation_contract(
-            tx_hash, tmp_addr
-        )
-        abi = ABISpider(self.chain, self.config.ABI_DIR).crawl_abi(impl_address)
-        contract = w3.eth.contract(abi=abi["result"])
-        # contract = w3.eth.contract(abi=self.get_abi(transaction['to'])["result"])
-        function = contract.get_function_by_selector(function_signature)
-
-        function_abi_entry = next(
-            (
-                abi for abi in contract.abi if
-                abi['type'] == 'function' and abi.get('name') == function.function_identifier
-            ), None)
-
-        if function_abi_entry:
-            decoded_input = contract.decode_function_input(transaction_input)
-
-            args = {}
-            for i, (param_name, param_value) in enumerate(zip(function_abi_entry['inputs'], decoded_input)):
-                if isinstance(param_value, dict):
-                    args[param_name['name']] = {
-                        key: ('0x' + value.hex().lstrip('0') if isinstance(value, bytes) else value)
-                        for key, value in param_value.items()
-                    }
-                else:
-                    args[param_name['name']] = param_value
-            input_data.args = args
-            input_data = hexbytes_to_str(input_data.model_dump())
-            dao.save(input_data, mode='w')
-
-        return input_data
 
     def parse_event_logs(self, tx_hash: str) -> List[dict]:
         tx_hash = tx_hash.lower()
 
-        dao = JsonDao(
-            self.config.LOG_DIR + '/' + tx_hash + '.json'
-        )
-        elogs = dao.load()
-        if elogs is not None:
-            return elogs
-        else:
+        @load_and_save(dir=self.config.LOG_DIR)
+        def _parse_event_logs(id: str):
             elogs = []
+            w3 = Web3(Web3.HTTPProvider(
+                self.node_bucket.get(id)
+            ))
+            receipt = w3.eth.get_transaction_receipt(HexBytes(id))
+            for item in tqdm(receipt["logs"]):
+                elog_dict = {
+                    camel_to_snake(k): w3.to_hex(v) if isinstance(v, bytes)
+                    else v for k, v in dict(item).items()
+                }
+                elog = EventLog.model_validate(elog_dict)
 
-        w3 = Web3(Web3.HTTPProvider(
-            self.node_bucket.get(tx_hash)
-        ))
-        receipt = w3.eth.get_transaction_receipt(HexBytes(tx_hash))
-        for item in tqdm(receipt["logs"]):
-            elog_dict = {
-                camel_to_snake(k): w3.to_hex(v) if isinstance(v, bytes)
-                else v for k, v in dict(item).items()
-            }
-            elog = EventLog.model_validate(elog_dict)
+                try:
+                    impl_address = self.get_implementation_contract(
+                        id, elog.address.lower()
+                    )
+                    abi = ABISpider(self.chain, self.config.ABI_DIR).crawl_abi(impl_address)
+                    contract = w3.eth.contract(
+                        w3.to_checksum_address(impl_address), abi=abi["result"]
+                    )
 
-            # Get abi
-            try:
-                impl_address = self.get_implementation_contract(
-                    tx_hash, elog.address.lower()
-                )
-                abi = ABISpider(self.chain, self.config.ABI_DIR).crawl_abi(impl_address)
-                # abi = self.get_abi(impl_address)
+                    # Get event signature of log (first item in topics array)
+                    receipt_event_signature_hex = w3.to_hex(elog.topics[0])
 
-                contract = w3.eth.contract(
-                    w3.to_checksum_address(impl_address), abi=abi["result"]
-                )
+                    events = [e for e in contract.abi if e["type"] == "event"]
+                    for event in events:
+                        # Get event signature components
+                        name = event["name"]
+                        param_type, param_name = [], []
 
-                # Get event signature of log (first item in topics array)
-                receipt_event_signature_hex = w3.to_hex(elog.topics[0])
+                        for param in event["inputs"]:
+                            if "components" not in param:
+                                param_type.append(param["type"])
+                                param_name.append(param["name"])
+                            else:
+                                param_type.append(f"({','.join([p['type'] for p in param['components']])})")
+                                param_name.append(f"({','.join([p['name'] for p in param['components']])})")
 
-                # Find events
-                events = [e for e in contract.abi if e["type"] == "event"]
-                for event in events:
-                    # Get event signature components
-                    name = event["name"]
-                    param_type, param_name = [], []
+                        inputs = ",".join(param_type)
+                        p_t = ",".join([e.lstrip('(').rstrip(')') for e in param_type]).split(",")
+                        p_n = ",".join([e.lstrip('(').rstrip(')') for e in param_name]).split(",")
+                        p_p = [f"{a} {b}" for a, b in zip(p_t, p_n)]
 
-                    for param in event["inputs"]:
-                        if "components" not in param:
-                            param_type.append(param["type"])
-                            param_name.append(param["name"])
-                        else:
-                            param_type.append(f"({','.join([p['type'] for p in param['components']])})")
-                            param_name.append(f"({','.join([p['name'] for p in param['components']])})")
+                        # Hash event signature
+                        event_signature_text = f"{name}({inputs})"
+                        event_signature_hex = w3.to_hex(w3.keccak(text=event_signature_text))
 
-                    # inputs = ",".join([param["type"] for param in event["inputs"]])
-                    inputs = ",".join(param_type)
+                        # Find match between log's event signature and ABI's event signature
+                        if event_signature_hex == receipt_event_signature_hex:
+                            decoded_log = dict(contract.events[event["name"]]().process_receipt(receipt)[0])
+                            elog.event, elog.args = f"{name}({','.join(p_p)})", dict(decoded_log['args'])
+                            break
+                except Exception as e:
+                    continue
 
-                    p_t = ",".join(param_type).split(",")
-                    p_n = ",".join(param_name).split(",")
+                elogs.append(hexbytes_to_str(elog.model_dump()))
+            return elogs
 
-                    p_p = [f"{a} {b}" for a, b in zip(p_t, p_n)]
+        return _parse_event_logs(id=tx_hash)
 
-                    # Hash event signature
-                    event_signature_text = f"{name}({inputs})"
-                    event_signature_hex = w3.to_hex(w3.keccak(text=event_signature_text))
-                    # if name.lower() == "XCalled".lower():
-                    #     print(name, inputs)
-                    #     print(event_signature_hex, receipt_event_signature_hex)
-                    #     exit(0)
+    def parse_input(self, tx_hash: str) -> dict:
+        tx_hash = tx_hash.lower()
 
-                    # Find match between log's event signature and ABI's event signature
-                    if event_signature_hex == receipt_event_signature_hex:
-                        decoded_log = dict(contract.events[event["name"]]().process_receipt(receipt)[0])
-                        elog.event, elog.args = f"{name}({','.join(p_p)})", dict(decoded_log['args'])
-                        break
-            except Exception as e:
-                continue
+        @load_and_save(dir=self.config.INPUT_DIR)
+        def _parse_input(id: str):
+            w3 = Web3(Web3.HTTPProvider(
+                self.node_bucket.get(id)
+            ))
+            transaction = w3.eth.get_transaction(HexBytes(id))
+            transaction_input = transaction['input']
+            input_data = Input.model_validate({
+                "transaction_hash": tx_hash,
+                "input": str(transaction_input),
+                "function": "",
+                "args": {}
+            })
 
-            elogs.append(hexbytes_to_str(elog.model_dump()))
-        dao.save(elogs)
+            # Parsing input data
+            function_signature = transaction_input[:10]
+            impl_address = self.get_implementation_contract(tx_hash, transaction['to'])
 
-        return elogs
+            abi = ABISpider(self.chain, self.config.ABI_DIR).crawl_abi(impl_address)
+            contract = w3.eth.contract(w3.to_checksum_address(impl_address), abi=abi["result"])
+            function = contract.get_function_by_selector(function_signature)
+
+            function_abi_entry = next(
+                (
+                    abi for abi in contract.abi if
+                    abi['type'] == 'function' and abi.get('name') == function.function_identifier
+                ), None)
+
+            if function_abi_entry:
+                decoded_input = contract.decode_function_input(transaction_input)
+
+                args = {}
+                for i, (param_name, param_value) in enumerate(zip(function_abi_entry['inputs'], decoded_input)):
+                    print(i, (param_name, param_value))
+                    exit(0)
+                    if isinstance(param_value, dict):
+                        args[param_name['name']] = {
+                            key: ('0x' + value.hex().lstrip('0') if isinstance(value, bytes) else value)
+                            for key, value in param_value.items()
+                        }
+                    else:
+                        args[param_name['name']] = param_value
+                input_data.args = args
+                input_data = hexbytes_to_str(input_data.model_dump())
+            return input_data
+
+        return _parse_input(id=tx_hash)
+        # dao = JsonDao(
+        #     self.config.INPUT_DIR + '/' + tx_hash + '.json'
+        # )
+        # input_data = dao.load()
+        # if input_data is not None:
+        #     return input_data[0]
+        # else:
+        #     input_data = Input.model_validate({
+        #         "transaction_hash": tx_hash,
+        #         "args": {}
+        #     })
+
 
 
 if __name__ == '__main__':
     cof = Config()
     parser = Parser(tag="ETH", config=cof)
-    print(parser.parse_event_logs("0xde06f7f44b8387dc8d315081c1681943df6e2670bb30b11a5e2c2738134a1c1a"))
+    print(parser.parse_input("0xde06f7f44b8387dc8d315081c1681943df6e2670bb30b11a5e2c2738134a1c1a"))
