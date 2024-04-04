@@ -6,9 +6,6 @@
 @Author  : zzYe
 
 """
-import json
-import requests
-
 from typing import List
 
 from tqdm import tqdm
@@ -17,11 +14,12 @@ from hexbytes import HexBytes
 
 from conf.core import Config
 from dao import JsonDao
-from spider._meta import EventLog, Input
+from core import EventLog, Input
+from spider.contract import ABISpider
+from spider.trace import TxTraceSpider
 from utils import camel_to_snake
 from utils.bucket import ConHashBucket
 from utils.data import hexbytes_to_str
-from utils.url import join_url
 
 import warnings
 warnings.filterwarnings(action='ignore', category=Warning)
@@ -41,30 +39,20 @@ class Parser:
         for node in self.chain.nodes:
             self.node_bucket.push(node.api)
 
-    def get_abi(self, address: str) -> dict:
-        address = address.lower()
+    def get_implementation_contract(self, tx_hash: str, address: str) -> str:
+        implementation = address.lower()
 
-        dao = JsonDao(
-            self.config.ABI_DIR + '/' + address + '.json'
-        )
-        abi = dao.load()
-        if abi is not None:
-            return abi[0]
+        spider = TxTraceSpider(self.chain, self.config.TRACE_DIR)
+        trace = spider.crawl_tx_trace(tx_hash)["result"]
 
-        api_key = self.scan_bucket.get(address)
-        abi_endpoint = join_url(
-            self.chain.scan.api,
-            {
-                "module": "contract",
-                "action": "getabi",
-                "address": address,
-                "apikey": api_key
-            }
-        )
-        abi = json.loads(requests.get(abi_endpoint).text)
-        dao.save(abi, mode='w')
+        for t in trace:
+            action = t["action"]
+            if action["callType"].lower() == "delegatecall":
+                if action["from"].lower() == address.lower():
+                    implementation = action["to"].lower()
+                    break
 
-        return abi
+        return implementation
 
     def parse_input(self, tx_hash: str) -> dict:
         tx_hash = tx_hash.lower()
@@ -92,7 +80,12 @@ class Parser:
         tmp_addr = transaction['to']
         if str(tmp_addr).lower() == "0xeF4fB24aD0916217251F553c0596F8Edc630EB66".lower():
             tmp_addr = "0x7Ec2E51A9c4f088354aD8Ad8703C12D81BF21677".lower()
-        contract = w3.eth.contract(abi=self.get_abi(tmp_addr)["result"])
+
+        impl_address = self.get_implementation_contract(
+            tx_hash, tmp_addr
+        )
+        abi = ABISpider(self.chain, self.config.ABI_DIR).crawl_abi(impl_address)
+        contract = w3.eth.contract(abi=abi["result"])
         # contract = w3.eth.contract(abi=self.get_abi(transaction['to'])["result"])
         function = contract.get_function_by_selector(function_signature)
 
@@ -137,30 +130,22 @@ class Parser:
         ))
         receipt = w3.eth.get_transaction_receipt(HexBytes(tx_hash))
         for item in tqdm(receipt["logs"]):
-            print(item)
-            exit(0)
             elog_dict = {
                 camel_to_snake(k): w3.to_hex(v) if isinstance(v, bytes)
                 else v for k, v in dict(item).items()
             }
-
             elog = EventLog.model_validate(elog_dict)
 
             # Get abi
             try:
-                tmp_address = elog.address.lower()
-                if elog.address.lower() == "0xeF4fB24aD0916217251F553c0596F8Edc630EB66".lower():
-                    tmp_address = "0x7Ec2E51A9c4f088354aD8Ad8703C12D81BF21677".lower()
+                impl_address = self.get_implementation_contract(
+                    tx_hash, elog.address.lower()
+                )
+                abi = ABISpider(self.chain, self.config.ABI_DIR).crawl_abi(impl_address)
+                # abi = self.get_abi(impl_address)
 
-                # abi = self.get_abi(elog.address)
-                abi = self.get_abi(tmp_address)
-                # proxy_abi = self.get_abi(tmp_address) if tmp_address is not None else {}
-
-                # contract = w3.eth.contract(
-                #     w3.to_checksum_address(elog.address), abi=abi["result"]
-                # )
                 contract = w3.eth.contract(
-                    w3.to_checksum_address(tmp_address), abi=abi["result"]
+                    w3.to_checksum_address(impl_address), abi=abi["result"]
                 )
 
                 # Get event signature of log (first item in topics array)
@@ -171,15 +156,24 @@ class Parser:
                 for event in events:
                     # Get event signature components
                     name = event["name"]
-                    tmp_arr = []
+                    param_type, param_name = [], []
+
                     for param in event["inputs"]:
                         if "components" not in param:
-                            tmp_arr.append(param["type"])
+                            param_type.append(param["type"])
+                            param_name.append(param["name"])
                         else:
-                            tmp_arr.append(f"({','.join([p['type'] for p in param['components']])})")
+                            param_type.append(f"({','.join([p['type'] for p in param['components']])})")
+                            param_name.append(f"({','.join([p['name'] for p in param['components']])})")
 
                     # inputs = ",".join([param["type"] for param in event["inputs"]])
-                    inputs = ",".join(tmp_arr)
+                    inputs = ",".join(param_type)
+
+                    p_t = ",".join(param_type).split(",")
+                    p_n = ",".join(param_name).split(",")
+
+                    p_p = [f"{a} {b}" for a, b in zip(p_t, p_n)]
+
                     # Hash event signature
                     event_signature_text = f"{name}({inputs})"
                     event_signature_hex = w3.to_hex(w3.keccak(text=event_signature_text))
@@ -191,7 +185,7 @@ class Parser:
                     # Find match between log's event signature and ABI's event signature
                     if event_signature_hex == receipt_event_signature_hex:
                         decoded_log = dict(contract.events[event["name"]]().process_receipt(receipt)[0])
-                        elog.event, elog.args = decoded_log['event'], dict(decoded_log['args'])
+                        elog.event, elog.args = f"{name}({','.join(p_p)})", dict(decoded_log['args'])
                         break
             except Exception as e:
                 continue

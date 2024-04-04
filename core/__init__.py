@@ -6,10 +6,10 @@
 @Author  : zzYe
 
 """
-from spider._meta import (
-    EventLog, Input, CrawlParams
+from core._meta import (
+    EventLog, Input
 )
 
-from spider.parser import (
+from core.parser import (
     Parser
 )
