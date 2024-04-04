@@ -89,7 +89,11 @@ class Parser:
 
         # Parsing input data
         function_signature = transaction_input[:10]
-        contract = w3.eth.contract(abi=self.get_abi(transaction['to'])["result"])
+        tmp_addr = transaction['to']
+        if str(tmp_addr).lower() == "0xeF4fB24aD0916217251F553c0596F8Edc630EB66".lower():
+            tmp_addr = "0x7Ec2E51A9c4f088354aD8Ad8703C12D81BF21677".lower()
+        contract = w3.eth.contract(abi=self.get_abi(tmp_addr)["result"])
+        # contract = w3.eth.contract(abi=self.get_abi(transaction['to'])["result"])
         function = contract.get_function_by_selector(function_signature)
 
         function_abi_entry = next(
@@ -142,10 +146,19 @@ class Parser:
 
             # Get abi
             try:
-                abi = self.get_abi(elog.address)
+                tmp_address = elog.address.lower()
+                if elog.address.lower() == "0xeF4fB24aD0916217251F553c0596F8Edc630EB66".lower():
+                    tmp_address = "0x7Ec2E51A9c4f088354aD8Ad8703C12D81BF21677".lower()
 
+                # abi = self.get_abi(elog.address)
+                abi = self.get_abi(tmp_address)
+                # proxy_abi = self.get_abi(tmp_address) if tmp_address is not None else {}
+
+                # contract = w3.eth.contract(
+                #     w3.to_checksum_address(elog.address), abi=abi["result"]
+                # )
                 contract = w3.eth.contract(
-                    w3.to_checksum_address(elog.address), abi=abi["result"]
+                    w3.to_checksum_address(tmp_address), abi=abi["result"]
                 )
 
                 # Get event signature of log (first item in topics array)
@@ -156,10 +169,22 @@ class Parser:
                 for event in events:
                     # Get event signature components
                     name = event["name"]
-                    inputs = ",".join([param["type"] for param in event["inputs"]])
+                    tmp_arr = []
+                    for param in event["inputs"]:
+                        if "components" not in param:
+                            tmp_arr.append(param["type"])
+                        else:
+                            tmp_arr.append(f"({','.join([p['type'] for p in param['components']])})")
+
+                    # inputs = ",".join([param["type"] for param in event["inputs"]])
+                    inputs = ",".join(tmp_arr)
                     # Hash event signature
                     event_signature_text = f"{name}({inputs})"
                     event_signature_hex = w3.to_hex(w3.keccak(text=event_signature_text))
+                    # if name.lower() == "XCalled".lower():
+                    #     print(name, inputs)
+                    #     print(event_signature_hex, receipt_event_signature_hex)
+                    #     exit(0)
 
                     # Find match between log's event signature and ABI's event signature
                     if event_signature_hex == receipt_event_signature_hex:

@@ -6,7 +6,3 @@
 @Author : zzYe
 
 """
-
-from config.config import (
-    Config, Chain, load_config
-)
